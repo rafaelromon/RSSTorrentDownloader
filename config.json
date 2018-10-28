@@ -2,6 +2,7 @@
   "username": "username",
   "password": "username",
   "ip": "127.0.0.1",
+  "local_timezone": "CET",
   "timer": "300",
   "url": "http://www.url.com/rss.php?arg=",
   "additional_argument": "all",
