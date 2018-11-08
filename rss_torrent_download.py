@@ -1,6 +1,26 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+__copyright__ = """
+    RSSTorrentDownload - Automatically download new torrents from a RSS feed
+    Copyright (C) 2018  RafaelRomon
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
+__license__ = "GNU GPL 3"
+
 import json
 import logging
 import os
@@ -8,48 +28,37 @@ import time
 from datetime import datetime
 
 import feedparser
-# Global Variables
 import pytz
+
+# Global Variables
 
 TIME_FORMAT = "%Y.%m.%d-%H.%M.%S %z"
 CONFIG_FILE = "./config.json"
-LOG_FILE = "./temp.log"
+PARSER = json.load(open(CONFIG_FILE))
 
-PARSER = None
+LOG_FILE = PARSER["log_file"]
+USER = PARSER["username"]
+PASS = PARSER["password"]
+IP = PARSER["ip"]
+SLEEPTIMER = int(PARSER["timer"])
+LOCAL_TIMEZONE = PARSER["local_timezone"]
 
-USER = None
-PASS = None
-IP = None
-SLEEPTIMER = None
-LOCAL_TIMEZONE = None
-
-URL = None
-FEED_TIMEZONE = None
-FEED_TIMEZONE_CORRECT = None
-ADDITIONAL_ARGUMENT = None
-SHOWS = None
+URL = PARSER["url"]
+ADDITIONAL_ARGUMENT = PARSER["additional_argument"]
+TORRENTS = PARSER["torrents"]
 
 
-# TODO add proper logger
+# TODO limit log size
 # TODO support for multiple RSS feeds
-# TODO proper config reload
 
-def load_config():
-    print("[%s] Loading Config" % (time.strftime(TIME_FORMAT)))
-    logging.info("[%s] Loading Config" % (time.strftime(TIME_FORMAT)))
+def reload_torrents():
+    print("[%s] Reloading torrents" % (time.strftime(TIME_FORMAT)))
+    logging.info("[%s] Reloading torrents" % (time.strftime(TIME_FORMAT)))
+
+    global TORRENTS, PARSER
+
     PARSER = json.load(open(CONFIG_FILE))
-
-    global USER, PASS, IP, SLEEPTIMER, LOCAL_TIMEZONE, URL, ADDITIONAL_ARGUMENT, SHOWS
-
-    USER = PARSER["username"]
-    PASS = PARSER["password"]
-    IP = PARSER["ip"]
-    SLEEPTIMER = int(PARSER["timer"])
-    LOCAL_TIMEZONE = PARSER["local_timezone"]
-
-    URL = PARSER["url"]
-    ADDITIONAL_ARGUMENT = PARSER["additional_argument"]
-    SHOWS = PARSER["torrents"]
+    TORRENTS = PARSER["torrents"]
 
 
 def check_releases():
@@ -61,19 +70,21 @@ def check_releases():
     rss_feed = feedparser.parse(URL + ADDITIONAL_ARGUMENT)
 
     for entry in rss_feed.entries:
-        for show in SHOWS:
-            if show.lower() in entry.title.lower():
+        for torrent in TORRENTS:
+            if torrent.lower() in entry.title.lower():
+
+                # Adding timezone and converting to local timezone
                 entry_published = datetime.fromtimestamp(time.mktime(entry.published_parsed))
                 entry_published = pytz.utc.localize(entry_published)
-                entry_published = entry_published.replace(tzinfo=pytz.timezone("CET"))
+                entry_published = entry_published.replace(tzinfo=pytz.timezone(LOCAL_TIMEZONE))
 
                 # Check if torrent has already been downloaded
-                if SHOWS[show] == "NA" or datetime.strptime(SHOWS[show], TIME_FORMAT) < entry_published:
-                    # update_json(show)
+                if TORRENTS[torrent] == "NA" or datetime.strptime(TORRENTS[torrent], TIME_FORMAT) < entry_published:
+                    # update_json(torrent)
                     print("[%s] Downloading %s" % (time.strftime(TIME_FORMAT), entry.title))
                     logging.info("[%s] Downloading %s" % (time.strftime(TIME_FORMAT), entry.title))
                     download(entry.link)
-                    update_json(show)
+                    update_json(torrent)
 
                 else:
                     print("[%s] %s already downloaded" % (time.strftime(TIME_FORMAT), entry.title))
@@ -100,19 +111,16 @@ def update_json(torrent):
         f.truncate()
 
 
-def main():
-    load_config()
-    check_releases()
-
-
 if __name__ == '__main__':
-    logging.basicConfig(filename=LOG_FILE, level=logging.DEBUG)
-
+    logging.basicConfig(filename=LOG_FILE, filemode="a", format='%(message)s', level=logging.DEBUG)
+    logging.info("===================================================================================================")
+    print("===================================================================================================")
     logging.info("[%s] RSSTorrentDownloader Started" % (time.strftime(TIME_FORMAT)))
     print("[%s] RSSTorrentDownloader Started" % (time.strftime(TIME_FORMAT)))
 
     while 1:
-        main()
+        reload_torrents()
+        check_releases()
         logging.info("[%s] Waiting %s seconds..." % (time.strftime(TIME_FORMAT), SLEEPTIMER))
         print("[%s] Waiting %s seconds..." % (time.strftime(TIME_FORMAT), SLEEPTIMER))
         time.sleep(SLEEPTIMER)
