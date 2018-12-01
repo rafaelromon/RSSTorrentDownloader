@@ -26,6 +26,7 @@ import logging
 import os
 import time
 from datetime import datetime
+from logging.handlers import RotatingFileHandler
 
 import feedparser
 import pytz
@@ -37,6 +38,8 @@ CONFIG_FILE = "./config.json"
 PARSER = json.load(open(CONFIG_FILE))
 
 LOG_FILE = PARSER["log_file"]
+LOG_SIZE_LIMIT = PARSER["log_size_limit"] * 1024 * 1024  # Convert Mb to bytes
+LOG_BACKUPS = PARSER["log_backups"]
 USER = PARSER["username"]
 PASS = PARSER["password"]
 IP = PARSER["ip"]
@@ -48,12 +51,12 @@ ADDITIONAL_ARGUMENT = PARSER["additional_argument"]
 TORRENTS = PARSER["torrents"]
 
 
-# TODO limit log size
 # TODO support for multiple RSS feeds
+
 
 def reload_torrents():
     print("[%s] Reloading torrents" % (time.strftime(TIME_FORMAT)))
-    logging.info("[%s] Reloading torrents" % (time.strftime(TIME_FORMAT)))
+    logger.info("[%s] Reloading torrents" % (time.strftime(TIME_FORMAT)))
 
     global TORRENTS, PARSER
 
@@ -66,7 +69,7 @@ def check_releases():
     Checks RSS feed for new releases and calls download() if one is found
     """
     print("[%s] Checking for new releases..." % (time.strftime(TIME_FORMAT)))
-    logging.info("[%s] Checking for new releases..." % (time.strftime(TIME_FORMAT)))
+    logger.info("[%s] Checking for new releases..." % (time.strftime(TIME_FORMAT)))
     rss_feed = feedparser.parse(URL + ADDITIONAL_ARGUMENT)
 
     for entry in rss_feed.entries:
@@ -82,13 +85,13 @@ def check_releases():
                 if TORRENTS[torrent] == "NA" or datetime.strptime(TORRENTS[torrent], TIME_FORMAT) < entry_published:
                     # update_json(torrent)
                     print("[%s] Downloading %s" % (time.strftime(TIME_FORMAT), entry.title))
-                    logging.info("[%s] Downloading %s" % (time.strftime(TIME_FORMAT), entry.title))
+                    logger.info("[%s] Downloading %s" % (time.strftime(TIME_FORMAT), entry.title))
                     download(entry.link)
                     update_json(torrent)
 
                 else:
                     print("[%s] %s already downloaded" % (time.strftime(TIME_FORMAT), entry.title))
-                    logging.info("[%s] %s already downloaded" % (time.strftime(TIME_FORMAT), entry.title))
+                    logger.info("[%s] %s already downloaded" % (time.strftime(TIME_FORMAT), entry.title))
 
 
 def download(magnet):
@@ -112,15 +115,26 @@ def update_json(torrent):
 
 
 if __name__ == '__main__':
-    logging.basicConfig(filename=LOG_FILE, filemode="a", format='%(message)s', level=logging.DEBUG)
-    logging.info("===================================================================================================")
+
+    log_formatter = logging.Formatter("%(message)s")
+
+    log_handler = RotatingFileHandler(LOG_FILE, mode='a', maxBytes=LOG_SIZE_LIMIT, backupCount=LOG_BACKUPS,
+                                      encoding=None, delay=0)
+    log_handler.setFormatter(log_formatter)
+    log_handler.setLevel(logging.INFO)
+
+    logger = logging.getLogger('root')
+    logger.setLevel(logging.INFO)
+    logger.addHandler(log_handler)
+
+    logger.info("===================================================================================================")
+    logger.info("[%s] RSSTorrentDownloader Started" % (time.strftime(TIME_FORMAT)))
     print("===================================================================================================")
-    logging.info("[%s] RSSTorrentDownloader Started" % (time.strftime(TIME_FORMAT)))
     print("[%s] RSSTorrentDownloader Started" % (time.strftime(TIME_FORMAT)))
 
     while 1:
         reload_torrents()
         check_releases()
-        logging.info("[%s] Waiting %s seconds..." % (time.strftime(TIME_FORMAT), SLEEPTIMER))
+        logger.info("[%s] Waiting %s seconds..." % (time.strftime(TIME_FORMAT), SLEEPTIMER))
         print("[%s] Waiting %s seconds..." % (time.strftime(TIME_FORMAT), SLEEPTIMER))
         time.sleep(SLEEPTIMER)

@@ -7,6 +7,8 @@
   "url": "http://www.url.com/rss.php?arg=",
   "additional_argument": "all",
   "log_file": "rsstorrentdownloader.log",
+  "log_size_limit": 5,
+  "log_backups": 2,
   "torrents": {
     "torrent1": "NA",
     "torrent2": "NA",
