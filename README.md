@@ -2,10 +2,9 @@
 [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](http://www.gnu.org/licenses/gpl-3.0)
 
 RSSTorrentDownloader checks for text occurences on a torrent RSS Feed, and start downloading them on a tranmission-server.
-
-### Upcoming Features
+### Features
 * Support for multiple RSS feeds.
-* Limited log file size.
+### Upcoming Features
 * Improved logger by checking transmission-remote command output.
 * Whatever stupid feature i come up with.
 

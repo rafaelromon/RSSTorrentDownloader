@@ -46,34 +46,38 @@ IP = PARSER["ip"]
 SLEEPTIMER = int(PARSER["timer"])
 LOCAL_TIMEZONE = PARSER["local_timezone"]
 
-URL = PARSER["url"]
-ADDITIONAL_ARGUMENT = PARSER["additional_argument"]
-TORRENTS = PARSER["torrents"]
+FEEDS = PARSER["feeds"]
 
 
 # TODO support for multiple RSS feeds
 
 
-def reload_torrents():
-    print("[%s] Reloading torrents" % (time.strftime(TIME_FORMAT)))
-    logger.info("[%s] Reloading torrents" % (time.strftime(TIME_FORMAT)))
+def reload_feeds():
+    print("[%s] Reloading torrents feeds" % (time.strftime(TIME_FORMAT)))
+    logger.info("[%s] Reloading torrent feeds" % (time.strftime(TIME_FORMAT)))
 
-    global TORRENTS, PARSER
+    global FEEDS, PARSER
 
     PARSER = json.load(open(CONFIG_FILE))
-    TORRENTS = PARSER["torrents"]
+    FEEDS = PARSER["feeds"]
 
 
-def check_releases():
+def check_releases(feed):
     """
     Checks RSS feed for new releases and calls download() if one is found
     """
-    print("[%s] Checking for new releases..." % (time.strftime(TIME_FORMAT)))
-    logger.info("[%s] Checking for new releases..." % (time.strftime(TIME_FORMAT)))
-    rss_feed = feedparser.parse(URL + ADDITIONAL_ARGUMENT)
+
+    print("[%s] Checking for new Releases in %s:" % (time.strftime(TIME_FORMAT), feed))
+    logger.info("[%s] Checking for new Releases in %s:" % (time.strftime(TIME_FORMAT), feed))
+
+    url = FEEDS[feed]["url"]
+    additional_argument = FEEDS[feed]["additional_argument"]
+    torrents = FEEDS[feed]["torrents"]
+
+    rss_feed = feedparser.parse(url + additional_argument)
 
     for entry in rss_feed.entries:
-        for torrent in TORRENTS:
+        for torrent in torrents:
             if torrent.lower() in entry.title.lower():
 
                 # Adding timezone and converting to local timezone
@@ -82,16 +86,11 @@ def check_releases():
                 entry_published = entry_published.replace(tzinfo=pytz.timezone(LOCAL_TIMEZONE))
 
                 # Check if torrent has already been downloaded
-                if TORRENTS[torrent] == "NA" or datetime.strptime(TORRENTS[torrent], TIME_FORMAT) < entry_published:
-                    # update_json(torrent)
-                    print("[%s] Downloading %s" % (time.strftime(TIME_FORMAT), entry.title))
-                    logger.info("[%s] Downloading %s" % (time.strftime(TIME_FORMAT), entry.title))
+                if torrents[torrent] == "NA" or datetime.strptime(torrents[torrent], TIME_FORMAT) < entry_published:
+                    print("[%s] - Downloading %s" % (time.strftime(TIME_FORMAT), entry.title))
+                    logger.info("[%s] - Downloading %s" % (time.strftime(TIME_FORMAT), entry.title))
                     download(entry.link)
-                    update_json(torrent)
-
-                else:
-                    print("[%s] %s already downloaded" % (time.strftime(TIME_FORMAT), entry.title))
-                    logger.info("[%s] %s already downloaded" % (time.strftime(TIME_FORMAT), entry.title))
+                    update_json(feed, torrent)
 
 
 def download(magnet):
@@ -102,13 +101,13 @@ def download(magnet):
     os.system("%s >/dev/null" % cmd)  # TODO check command response
 
 
-def update_json(torrent):
+def update_json(feed, torrent):
     """
     Updates config with the last time the torrent was downloaded
     """
     with open(CONFIG_FILE, "r+") as f:
         data = json.load(f)
-        data["torrents"][torrent] = time.strftime(TIME_FORMAT)
+        data["feeds"][feed]["torrents"][torrent] = time.strftime(TIME_FORMAT)
         f.seek(0)
         json.dump(data, f, indent=4)
         f.truncate()
@@ -133,8 +132,13 @@ if __name__ == '__main__':
     print("[%s] RSSTorrentDownloader Started" % (time.strftime(TIME_FORMAT)))
 
     while 1:
-        reload_torrents()
-        check_releases()
+
+        reload_feeds()
+
+        # Calls check_releases() for every feed in FEEDS
+        for feed in FEEDS:
+            check_releases(feed)
+
         logger.info("[%s] Waiting %s seconds..." % (time.strftime(TIME_FORMAT), SLEEPTIMER))
         print("[%s] Waiting %s seconds..." % (time.strftime(TIME_FORMAT), SLEEPTIMER))
         time.sleep(SLEEPTIMER)
