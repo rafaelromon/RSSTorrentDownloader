@@ -17,7 +17,7 @@ RSSTorrentDownloader checks for text occurences on a torrent RSS Feed, and start
 ### Prerequisites
 
 * Any GNU/Linux Distro, i have tested it on Arch and Raspbian.
-* A Transmission Server, see [Deployment](Deployment) for additional information.
+* A Transmission Server, see [Deployment](https://github.com/rafaelromon/RSSTorrentDownloader#deployment) for additional information.
 * python3 and transmission-remote packages.
 * Additional Python packages: feedparser and pytz.
 
