@@ -4,12 +4,27 @@
   "ip": "127.0.0.1",
   "local_timezone": "CET",
   "timer": "300",
-  "url": "http://www.url.com/rss.php?arg=",
-  "additional_argument": "all",
   "log_file": "rsstorrentdownloader.log",
-  "torrents": {
-    "torrent1": "NA",
-    "torrent2": "NA",
-    "torrent3": "NA"
+  "log_size_limit": 5,
+  "log_backups": 2,
+  "feeds": {
+    "feed1": {
+      "url": "http://www.url.com/rss.php?arg=",
+      "additional_argument": "all",
+      "torrents": {
+        "torrent1": "NA",
+        "torrent2": "NA",
+        "torrent3": "NA"
+      }
+    },
+    "feed2": {
+      "url": "http://www.url.com/rss.php?arg=",
+      "additional_argument": "all",
+      "torrents": {
+        "torrent4": "NA",
+        "torrent5": "NA",
+        "torrent6": "NA"
+      }
+    }
   }
 }

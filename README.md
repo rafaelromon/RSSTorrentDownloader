@@ -3,9 +3,11 @@
 
 RSSTorrentDownloader checks for text occurences on a torrent RSS Feed, and start downloading them on a tranmission-server.
 
-### Testing Features (dev branch)
+### Features
+* Support for multiple RSS feeds.
 * Support for multiple RSS feeds.
 * Limited log file size.
+
 ### Upcoming Features
 * Improved logger by checking transmission-remote command output.
 * Whatever stupid feature i come up with.
