@@ -32,7 +32,6 @@ import feedparser
 import pytz
 
 # Global Variables
-
 TIME_FORMAT = "%Y.%m.%d-%H.%M.%S %z"
 CONFIG_FILE = "./config.json"
 PARSER = json.load(open(CONFIG_FILE))
