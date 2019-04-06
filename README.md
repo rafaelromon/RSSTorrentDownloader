@@ -22,13 +22,13 @@ RSSTorrentDownloader checks for text occurences on a torrent RSS Feed, and start
 ##### On Debian based Distros
 ```
 sudo apt install python3, transmission-remote, python3-pip
-sudo pip3 install feedparser, pytz
+sudo pip3 install -r requirements.txt
 ```
 
 ##### Arch based Distros
 ```
 sudo pacman -S python, transmission-remote, python-pip
-sudo pip install feedparser, pytz
+sudo pip install -r requirements.txt
 ```
 
 ### Installing
