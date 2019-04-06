@@ -37,9 +37,11 @@ TIME_FORMAT = "%Y.%m.%d-%H.%M.%S %z"
 CONFIG_FILE = "./config.json"
 PARSER = json.load(open(CONFIG_FILE))
 
+ENABLE_LOGGER = PARSER["enable_logger"]
 LOG_FILE = PARSER["log_file"]
 LOG_SIZE_LIMIT = PARSER["log_size_limit"] * 1024 * 1024  # Convert Mb to bytes
 LOG_BACKUPS = PARSER["log_backups"]
+
 USER = PARSER["username"]
 PASS = PARSER["password"]
 IP = PARSER["ip"]
@@ -54,7 +56,6 @@ FEEDS = PARSER["feeds"]
 
 def reload_feeds():
     print("[%s] Reloading torrents feeds" % (time.strftime(TIME_FORMAT)))
-    logger.info("[%s] Reloading torrent feeds" % (time.strftime(TIME_FORMAT)))
 
     global FEEDS, PARSER
 
@@ -68,7 +69,6 @@ def check_releases(feed):
     """
 
     print("[%s] Checking for new Releases in %s:" % (time.strftime(TIME_FORMAT), feed))
-    logger.info("[%s] Checking for new Releases in %s:" % (time.strftime(TIME_FORMAT), feed))
 
     url = FEEDS[feed]["url"]
     additional_argument = FEEDS[feed]["additional_argument"]
@@ -88,7 +88,7 @@ def check_releases(feed):
                 # Check if torrent has already been downloaded
                 if torrents[torrent] == "NA" or datetime.strptime(torrents[torrent], TIME_FORMAT) < entry_published:
                     print("[%s] - Downloading %s" % (time.strftime(TIME_FORMAT), entry.title))
-                    logger.info("[%s] - Downloading %s" % (time.strftime(TIME_FORMAT), entry.title))
+                    log("[%s] - Downloading %s" % (time.strftime(TIME_FORMAT), entry.title))
                     download(entry.link)
                     update_json(feed, torrent)
 
@@ -113,21 +113,27 @@ def update_json(feed, torrent):
         f.truncate()
 
 
+def log(string):
+    if ENABLE_LOGGER:
+        logger.info(string)
+
+
 if __name__ == '__main__':
 
-    log_formatter = logging.Formatter("%(message)s")
+    if ENABLE_LOGGER:
+        log_formatter = logging.Formatter("%(message)s")
 
-    log_handler = RotatingFileHandler(LOG_FILE, mode='a', maxBytes=LOG_SIZE_LIMIT, backupCount=LOG_BACKUPS,
-                                      encoding=None, delay=0)
-    log_handler.setFormatter(log_formatter)
-    log_handler.setLevel(logging.INFO)
+        log_handler = RotatingFileHandler(LOG_FILE, mode='a', maxBytes=LOG_SIZE_LIMIT, backupCount=LOG_BACKUPS,
+                                          encoding=None, delay=0)
+        log_handler.setFormatter(log_formatter)
+        log_handler.setLevel(logging.INFO)
 
-    logger = logging.getLogger('root')
-    logger.setLevel(logging.INFO)
-    logger.addHandler(log_handler)
+        logger = logging.getLogger('root')
+        logger.setLevel(logging.INFO)
+        logger.addHandler(log_handler)
 
-    logger.info("===================================================================================================")
-    logger.info("[%s] RSSTorrentDownloader Started" % (time.strftime(TIME_FORMAT)))
+    log("===================================================================================================")
+    log("[%s] RSSTorrentDownloader Started" % (time.strftime(TIME_FORMAT)))
     print("===================================================================================================")
     print("[%s] RSSTorrentDownloader Started" % (time.strftime(TIME_FORMAT)))
 
@@ -139,6 +145,5 @@ if __name__ == '__main__':
         for feed in FEEDS:
             check_releases(feed)
 
-        logger.info("[%s] Waiting %s seconds..." % (time.strftime(TIME_FORMAT), SLEEPTIMER))
         print("[%s] Waiting %s seconds..." % (time.strftime(TIME_FORMAT), SLEEPTIMER))
         time.sleep(SLEEPTIMER)
