@@ -4,7 +4,7 @@
   "ip": "127.0.0.1",
   "local_timezone": "CET",
   "timer": "300",
-  "enable_logger": false,
+  "enable_logger": true,
   "log_file": "rsstorrentdownloader.log",
   "log_size_limit": 5,
   "log_backups": 2,
