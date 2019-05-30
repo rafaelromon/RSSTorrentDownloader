@@ -21,13 +21,13 @@ RSSTorrentDownloader checks for text occurences on a torrent RSS Feed, and start
 
 ##### On Debian based Distros
 ```
-sudo apt install python3, transmission-cli, python3-pip
+sudo apt install python3 transmission-cli python3-pip
 sudo pip3 install -r requirements.txt
 ```
 
 ##### Arch based Distros
 ```
-sudo pacman -S python, transmission-cli, python-pip
+sudo pacman -S python transmission-cli python-pip
 sudo pip install -r requirements.txt
 ```
 
